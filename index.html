@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validador de Garantia HP</title>
+    <title>🔍 Validador de Garantia HP</title>
     <style>
         * { box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            background: #f5f5f5;
+            background: #f0f2f5;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -24,7 +24,8 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 { color: #0096d6; margin-top: 0; }
+        h1 { color: #0096d6; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .subtitle { color: #666; margin-bottom: 20px; }
         .input-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; }
         .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -35,10 +36,12 @@
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
+            background: #fafafa;
         }
         input[type="text"]:focus {
             border-color: #0096d6;
             outline: none;
+            background: white;
         }
         button {
             padding: 12px 30px;
@@ -49,6 +52,7 @@
             font-size: 16px;
             cursor: pointer;
             font-weight: bold;
+            white-space: nowrap;
         }
         button:hover:not(:disabled) { background: #0077b3; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -59,57 +63,87 @@
             background: #f8f9fa;
             border: 2px solid #dee2e6;
             white-space: pre-wrap;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             font-size: 14px;
             line-height: 1.8;
             min-height: 100px;
+            transition: all 0.3s;
         }
         .sucesso { border-color: #28a745; background: #d4edda; }
         .erro { border-color: #dc3545; background: #f8d7da; }
         .loading { border-color: #ffc107; background: #fff3cd; }
-        .test-list { margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .test-list {
+            margin: 15px 0;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+        }
+        .test-list .label { font-weight: bold; color: #555; margin-right: 5px; }
         .test-list span {
             display: inline-block;
             background: white;
             padding: 4px 12px;
             border-radius: 20px;
-            margin: 3px;
             cursor: pointer;
             border: 1px solid #ddd;
             font-family: monospace;
+            font-size: 13px;
         }
         .test-list span:hover { background: #0096d6; color: white; border-color: #0096d6; }
-        .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #999; }
+        .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
+        .status-badge { display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-ativo { background: #28a745; color: white; }
+        .status-expirado { background: #dc3545; color: white; }
+        .status-pendente { background: #ffc107; color: #333; }
         @media (max-width: 600px) {
             .container { padding: 20px; }
             .input-row { flex-direction: column; }
-            button { width: 100%; }
+            button { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>🔍 Validador de Garantia HP</h1>
-    <p style="color: #666; margin-bottom: 20px;">Insere o número de série para consultar a garantia.</p>
+    <p class="subtitle">Insere o número de série para consultar o estado da garantia.</p>
 
     <div class="input-group">
         <label for="serial">Número de Série:</label>
         <div class="input-row">
             <input type="text" id="serial" placeholder="Ex: 39PKA1" value="39PKA1">
-            <button id="btnConsultar">Consultar</button>
+            <button id="btnConsultar">🔍 Consultar</button>
         </div>
     </div>
 
     <div class="test-list">
+        <span class="label">⚡ Testes:</span>
         <span onclick="document.getElementById('serial').value='39PKA1'; consultar();">39PKA1</span>
         <span onclick="document.getElementById('serial').value='CND1234ABC'; consultar();">CND1234ABC</span>
+        <span onclick="document.getElementById('serial').value='5CD1234XYZ'; consultar();">5CD1234XYZ</span>
     </div>
 
     <div id="resultado">💡 Aguardando consulta...</div>
-    <div class="footer">🔒 API própria Vercel</div>
+    <div class="footer">
+        🔒 Utiliza um proxy CORS público<br>
+        <span style="font-size: 11px; color: #bbb;">v3.0 - Compatível com GitHub Pages e Vercel</span>
+    </div>
 </div>
 
 <script>
+    // Proxies CORS públicos (fallback automático)
+    const PROXIES = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://cors-anywhere.herokuapp.com/'
+    ];
+
+    let proxyIndex = 0;
+
     document.getElementById('btnConsultar').addEventListener('click', consultar);
     document.getElementById('serial').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultar();
@@ -127,52 +161,148 @@
         }
 
         botao.disabled = true;
-        resultado.textContent = '⏳ A consultar...';
+        resultado.textContent = `⏳ A consultar... (proxy ${proxyIndex + 1}/${PROXIES.length})`;
         resultado.className = 'loading';
 
         try {
-            const response = await fetch('/api/warranty', {
+            const proxy = PROXIES[proxyIndex];
+            
+            // Passo 1: Pesquisar o produto
+            const searchUrl = `https://support.hp.com/wcc-services/searchresult/pt-pt?q=${encodeURIComponent(serial)}&context=pdp`;
+            const searchFullUrl = proxy + encodeURIComponent(searchUrl);
+            
+            console.log(`📡 Pesquisando: ${searchFullUrl}`);
+            const searchRes = await fetch(searchFullUrl);
+            
+            if (!searchRes.ok) {
+                if (searchRes.status === 429 || searchRes.status === 403) {
+                    proxyIndex++;
+                    if (proxyIndex < PROXIES.length) {
+                        resultado.textContent = `⏳ A mudar de proxy... (${proxyIndex + 1}/${PROXIES.length})`;
+                        return consultar();
+                    }
+                }
+                throw new Error(`Erro na pesquisa: ${searchRes.status}`);
+            }
+
+            const searchData = await searchRes.json();
+            const productData = searchData?.data?.verifyResponse?.data;
+
+            if (!productData) {
+                proxyIndex++;
+                if (proxyIndex < PROXIES.length) {
+                    resultado.textContent = `⏳ A tentar outro proxy... (${proxyIndex + 1}/${PROXIES.length})`;
+                    return consultar();
+                }
+                throw new Error('Produto não encontrado. Verifica o número de série.');
+            }
+
+            const sku = productData.altProductNumber || productData.productNumber || 'N/A';
+            const productName = productData.productName || 'N/A';
+
+            console.log(`✅ Produto encontrado: ${productName}`);
+
+            // Passo 2: Obter garantia
+            const warrantyPayload = {
+                cc: "pt",
+                lc: "pt",
+                utcOffset: "P0100",
+                devices: [{
+                    countryOfPurchase: "pt",
+                    serialNumber: serial,
+                    productNumber: sku,
+                    displayProductNumber: productData.productNumber || sku
+                }],
+                skipSyncCall: false
+            };
+
+            const warrantyUrl = 'https://support.hp.com/wcc-services/profile/devices/warranty/specs?authState=anonymous&template=WarrantyLanding';
+            const warrantyFullUrl = proxy + encodeURIComponent(warrantyUrl);
+
+            console.log(`📡 A consultar garantia...`);
+            const warrantyRes = await fetch(warrantyFullUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ serialNumber: serial })
+                body: JSON.stringify(warrantyPayload)
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || `Erro ${response.status}`);
-            }
-
-            if (data.success) {
-                const info = data.data;
-                const start = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT') : 'N/A';
-                const end = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT') : 'N/A';
-
-                let dias = 'N/A';
-                if (info.warrantyEndDate) {
-                    const diff = Math.ceil((new Date(info.warrantyEndDate) - new Date()) / (1000*60*60*24));
-                    dias = diff > 0 ? diff + ' dias' : 'Expirada';
+            if (!warrantyRes.ok) {
+                if (warrantyRes.status === 429 || warrantyRes.status === 403) {
+                    proxyIndex++;
+                    if (proxyIndex < PROXIES.length) {
+                        resultado.textContent = `⏳ A mudar de proxy... (${proxyIndex + 1}/${PROXIES.length})`;
+                        return consultar();
+                    }
                 }
-
-                resultado.innerHTML = `
-✅ CONSULTA BEM-SUCEDIDA!
-
-📦 Produto: ${info.productName || 'N/A'}
-🔹 Série: ${info.serialNumber}
-🔹 Produto: ${info.productNumber || 'N/A'}
-📊 Estado: ${info.status || 'N/A'}
-📅 Início: ${start}
-📅 Fim: ${end}
-⏳ Dias restantes: ${dias}
-${info.caption ? '📌 ' + info.caption : ''}
-                `;
-                resultado.className = 'sucesso';
-            } else {
-                throw new Error(data.error || 'Produto não encontrado');
+                throw new Error(`Erro na garantia: ${warrantyRes.status}`);
             }
+
+            const warrantyData = await warrantyRes.json();
+            const deviceInfo = warrantyData?.data?.devices?.[0];
+            const warrantyInfo = deviceInfo?.warranty?.data;
+            const productSpecs = deviceInfo?.productSpecs?.data;
+
+            if (!warrantyInfo) {
+                throw new Error('Garantia não encontrada.');
+            }
+
+            // Reset proxy index após sucesso
+            proxyIndex = 0;
+
+            // Formatar datas
+            const startDate = warrantyInfo.warrantyStartDate ? new Date(warrantyInfo.warrantyStartDate).toLocaleDateString('pt-PT') : 'N/A';
+            const endDate = warrantyInfo.warrantyEndDate ? new Date(warrantyInfo.warrantyEndDate).toLocaleDateString('pt-PT') : 'N/A';
+
+            // Calcular dias restantes
+            let remainingDays = 'N/A';
+            let remainingMonths = 'N/A';
+            if (warrantyInfo.warrantyEndDate) {
+                const diff = Math.ceil((new Date(warrantyInfo.warrantyEndDate) - new Date()) / (1000 * 60 * 60 * 24));
+                if (diff > 0) {
+                    remainingDays = `${diff} dias`;
+                    remainingMonths = `${Math.ceil(diff / 30)} meses`;
+                } else {
+                    remainingDays = 'Expirada';
+                    remainingMonths = 'Expirada';
+                }
+            }
+
+            // Status badge
+            let badge = '<span class="status-badge status-ativo">Ativo</span>';
+            if (warrantyInfo.statusCode === 3) badge = '<span class="status-badge status-pendente">Pendente</span>';
+            else if (warrantyInfo.statusCode === 4 || warrantyInfo.statusCode === 5) badge = '<span class="status-badge status-expirado">Expirado</span>';
+
+            resultado.innerHTML = `
+✅ <strong>CONSULTA BEM-SUCEDIDA!</strong>
+
+📦 <strong>Produto:</strong> ${productSpecs?.productName || productName}
+🔹 <strong>Número de Série:</strong> ${warrantyInfo.serialNumber || serial}
+🔹 <strong>Número do Produto:</strong> ${warrantyInfo.productNumber || sku}
+📊 <strong>Estado:</strong> ${badge} ${warrantyInfo.status || 'N/A'}
+${warrantyInfo.statusDetail ? `📝 <strong>Detalhe:</strong> ${warrantyInfo.statusDetail}` : ''}
+📅 <strong>Data de Início:</strong> ${startDate}
+📅 <strong>Data de Fim:</strong> ${endDate}
+⏳ <strong>Dias Restantes:</strong> ${remainingDays}
+📆 <strong>Meses Restantes:</strong> ${remainingMonths}
+${warrantyInfo.warrantyTypeDescription ? `🏷️ <strong>Tipo:</strong> ${warrantyInfo.warrantyTypeDescription}` : ''}
+${warrantyInfo.caption ? `\n📌 <strong>Resumo:</strong> ${warrantyInfo.caption}` : ''}
+            `;
+            resultado.className = 'sucesso';
 
         } catch (error) {
-            resultado.innerHTML = `❌ Erro: ${error.message}`;
+            console.error('❌ Erro:', error);
+            resultado.innerHTML = `
+❌ <strong>Falha na consulta</strong>
+
+${error.message}
+
+<em style="color: #666; font-size: 13px;">Verifica o número de série e tenta novamente.</em>
+
+<details style="margin-top: 10px; font-size: 12px; color: #999;">
+    <summary>🔧 Detalhes técnicos</summary>
+    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 150px;">${error.stack || 'Sem stack trace'}</pre>
+</details>
+            `;
             resultado.className = 'erro';
         } finally {
             botao.disabled = false;
