@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Validador de Garantia HP</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container { 
+            max-width: 700px; 
+            width: 100%;
+            margin: auto; 
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #0096d6; 
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: #333;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        input[type="text"] { 
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #0096d6;
+            outline: none;
+        }
+        button { 
+            padding: 12px 30px; 
+            background-color: #0096d6; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer; 
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0077b3;
+        }
+        button:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+        }
+        #resultado { 
+            margin-top: 25px; 
+            padding: 20px; 
+            border-radius: 8px; 
+            background-color: #f8f9fa; 
+            border: 2px solid #e9ecef;
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100px;
+            transition: all 0.3s;
+        }
+        .sucesso { 
+            border-color: #28a745; 
+            background-color: #d4edda; 
+        }
+        .erro { 
+            border-color: #dc3545; 
+            background-color: #f8d7da; 
+        }
+        .loading {
+            border-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .input-row { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Validador de Garantia HP</h1>
+    <p style="color: #666; margin-bottom: 25px;">Insere o número de série para consultar o estado da garantia.</p>
+    
+    <div class="input-group">
+        <label for="serial">Número de Série:</label>
+        <div class="input-row">
+            <input type="text" id="serial" placeholder="Ex: 39PKA1" value="39PKA1">
+            <button id="btnConsultar">Consultar</button>
+        </div>
+    </div>
+
+    <div id="resultado">Aguardando consulta...</div>
+    <div class="footer">🔒 As chamadas são feitas através de um proxy seguro</div>
+</div>
+
+<script>
+    document.getElementById('btnConsultar').addEventListener('click', consultarGarantia);
+    document.getElementById('serial').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') consultarGarantia();
+    });
+
+    async function consultarGarantia() {
+        const serial = document.getElementById('serial').value.trim().toUpperCase();
+        const resultadoDiv = document.getElementById('resultado');
+        const botao = document.getElementById('btnConsultar');
+
+        if (!serial) {
+            resultadoDiv.textContent = '⚠️ Por favor, insira um Número de Série.';
+            resultadoDiv.className = 'erro';
+            return;
+        }
+
+        botao.disabled = true;
+        resultadoDiv.textContent = '⏳ A consultar a garantia...';
+        resultadoDiv.className = 'loading';
+
+        try {
+            const response = await fetch('/api/warranty', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ serialNumber: serial })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `Erro ${response.status}`);
+            }
+
+            if (data.success) {
+                const info = data.data;
+                const startDate = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT') : 'N/A';
+                const endDate = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT') : 'N/A';
+                
+                // Calcular dias restantes
+                let remainingDays = 'N/A';
+                if (info.warrantyEndDate) {
+                    const end = new Date(info.warrantyEndDate);
+                    const now = new Date();
+                    const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                    remainingDays = diff > 0 ? `${diff} dias` : 'Expirada';
+                }
+
+                resultadoDiv.innerHTML = `
+✅ <strong>CONSULTA BEM-SUCEDIDA!</strong>
+
+📦 <strong>Produto:</strong> ${info.productName || 'N/A'}
+🔹 <strong>Número de Série:</strong> ${info.serialNumber}
+🔹 <strong>Número do Produto:</strong> ${info.productNumber || 'N/A'}
+📊 <strong>Estado:</strong> ${info.status || 'N/A'}
+📅 <strong>Data de Início:</strong> ${startDate}
+📅 <strong>Data de Fim:</strong> ${endDate}
+⏳ <strong>Dias Restantes:</strong> ${remainingDays}
+${info.caption ? `📝 <strong>Detalhe:</strong> ${info.caption}` : ''}
+                `;
+                resultadoDiv.className = 'sucesso';
+            } else {
+                throw new Error(data.error || 'Produto não encontrado');
+            }
+
+        } catch (error) {
+            console.error('Erro:', error);
+            resultadoDiv.innerHTML = `
+❌ <strong>Falha na consulta</strong>
+
+${error.message}
+
+<em style="color: #666; font-size: 13px;">Verifica se o número de série está correto e tenta novamente.</em>
+            `;
+            resultadoDiv.className = 'erro';
+        } finally {
+            botao.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
