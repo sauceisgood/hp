@@ -88,7 +88,7 @@
             word-wrap: break-word; 
             font-family: 'Courier New', monospace;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.8;
             min-height: 100px;
             transition: all 0.3s;
         }
@@ -104,21 +104,16 @@
             border-color: #ffc107;
             background-color: #fff3cd;
         }
-        .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-success { background: #28a745; color: white; }
-        .badge-danger { background: #dc3545; color: white; }
-        .badge-warning { background: #ffc107; color: #333; }
         .footer {
             margin-top: 20px;
             text-align: center;
             font-size: 12px;
             color: #888;
+        }
+        .detalhe {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
         }
         @media (max-width: 600px) {
             .container { padding: 20px; }
@@ -166,6 +161,7 @@
         resultadoDiv.className = 'loading';
 
         try {
+            // Usar o caminho relativo para a API
             const response = await fetch('/api/warranty', {
                 method: 'POST',
                 headers: {
@@ -173,6 +169,13 @@
                 },
                 body: JSON.stringify({ serialNumber: serial })
             });
+
+            // Verificar se a resposta é JSON válido
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`A API retornou HTML em vez de JSON. Verifica a configuração do servidor.`);
+            }
 
             const data = await response.json();
 
@@ -182,17 +185,43 @@
 
             if (data.success) {
                 const info = data.data;
-                const startDate = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT') : 'N/A';
-                const endDate = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT') : 'N/A';
+                
+                // Formatar datas
+                const startDate = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }) : 'N/A';
+                
+                const endDate = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }) : 'N/A';
                 
                 // Calcular dias restantes
                 let remainingDays = 'N/A';
+                let remainingMonths = 'N/A';
                 if (info.warrantyEndDate) {
                     const end = new Date(info.warrantyEndDate);
                     const now = new Date();
-                    const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-                    remainingDays = diff > 0 ? `${diff} dias` : 'Expirada';
+                    const diffTime = end - now;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 0) {
+                        remainingDays = `${diffDays} dias`;
+                        const diffMonths = Math.ceil(diffDays / 30);
+                        remainingMonths = `${diffMonths} meses`;
+                    } else {
+                        remainingDays = 'Expirada';
+                        remainingMonths = 'Expirada';
+                    }
                 }
+
+                // Determinar status colorido
+                let statusEmoji = '🟢';
+                if (info.statusCode === 3) statusEmoji = '🟡';
+                else if (info.statusCode === 4 || info.statusCode === 5) statusEmoji = '🔴';
 
                 resultadoDiv.innerHTML = `
 ✅ <strong>CONSULTA BEM-SUCEDIDA!</strong>
@@ -200,11 +229,14 @@
 📦 <strong>Produto:</strong> ${info.productName || 'N/A'}
 🔹 <strong>Número de Série:</strong> ${info.serialNumber}
 🔹 <strong>Número do Produto:</strong> ${info.productNumber || 'N/A'}
-📊 <strong>Estado:</strong> ${info.status || 'N/A'}
+📊 <strong>Estado:</strong> ${statusEmoji} ${info.status || 'N/A'}
+${info.statusDetail ? `📝 <strong>Detalhe:</strong> ${info.statusDetail}` : ''}
 📅 <strong>Data de Início:</strong> ${startDate}
 📅 <strong>Data de Fim:</strong> ${endDate}
 ⏳ <strong>Dias Restantes:</strong> ${remainingDays}
-${info.caption ? `📝 <strong>Detalhe:</strong> ${info.caption}` : ''}
+📆 <strong>Meses Restantes:</strong> ${remainingMonths}
+${info.warrantyType ? `🏷️ <strong>Tipo de Garantia:</strong> ${info.warrantyType}` : ''}
+${info.caption ? `\n📌 <strong>Resumo:</strong> ${info.caption}` : ''}
                 `;
                 resultadoDiv.className = 'sucesso';
             } else {
@@ -212,13 +244,18 @@ ${info.caption ? `📝 <strong>Detalhe:</strong> ${info.caption}` : ''}
             }
 
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Erro detalhado:', error);
             resultadoDiv.innerHTML = `
 ❌ <strong>Falha na consulta</strong>
 
 ${error.message}
 
 <em style="color: #666; font-size: 13px;">Verifica se o número de série está correto e tenta novamente.</em>
+
+<details style="margin-top: 10px; font-size: 12px; color: #999;">
+    <summary>Detalhes técnicos</summary>
+    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto;">${error.stack || 'Sem stack trace'}</pre>
+</details>
             `;
             resultadoDiv.className = 'erro';
         } finally {
