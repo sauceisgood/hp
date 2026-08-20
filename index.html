@@ -189,28 +189,16 @@
     <div class="test-list">
         <span class="label">⚡ Testes rápidos:</span>
         <span onclick="document.getElementById('serial').value='39PKA1'; consultarGarantia();">39PKA1</span>
-        <span onclick="document.getElementById('serial').value='CND1234ABC'; consultarGarantia();">CND1234ABC</span>
-        <span onclick="document.getElementById('serial').value='5CD1234XYZ'; consultarGarantia();">5CD1234XYZ</span>
-        <span onclick="document.getElementById('serial').value='SER123456'; consultarGarantia();">SER123456</span>
     </div>
 
     <div id="resultado">💡 Aguardando consulta...</div>
     <div class="footer">
-        🔒 Utiliza um proxy CORS para comunicação segura com a API da HP<br>
-        <span style="font-size: 11px; color: #bbb;">v1.0 - Consulta garantia de produtos HP</span>
+        🔒 API própria para consulta de garantia HP<br>
+        <span style="font-size: 11px; color: #bbb;">v2.0</span>
     </div>
 </div>
 
 <script>
-    // Lista de proxies CORS disponíveis (tenta cada um até funcionar)
-    const PROXIES = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://cors-anywhere.herokuapp.com/'
-    ];
-
-    let currentProxyIndex = 0;
-
     document.getElementById('btnConsultar').addEventListener('click', consultarGarantia);
     document.getElementById('serial').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultarGarantia();
@@ -228,185 +216,98 @@
         }
 
         botao.disabled = true;
-        resultadoDiv.textContent = '⏳ A consultar a garantia... (tentativa com proxy ' + (currentProxyIndex + 1) + ' de ' + PROXIES.length + ')';
+        resultadoDiv.textContent = '⏳ A consultar a garantia...';
         resultadoDiv.className = 'loading';
 
-        // Reset proxy index se já tentámos todos
-        if (currentProxyIndex >= PROXIES.length) {
-            currentProxyIndex = 0;
-        }
-
         try {
-            const proxy = PROXIES[currentProxyIndex];
-            
-            // --- Passo 1: Pesquisar o produto ---
-            const searchUrl = `https://support.hp.com/wcc-services/searchresult/pt-pt?q=${encodeURIComponent(serial)}&context=pdp`;
-            const searchFullUrl = proxy + encodeURIComponent(searchUrl);
-            
-            console.log(`📡 Pesquisando: ${searchFullUrl}`);
-            const searchResponse = await fetch(searchFullUrl);
-            
-            if (!searchResponse.ok) {
-                // Se falhar, tenta o próximo proxy
-                if (searchResponse.status === 429 || searchResponse.status === 403) {
-                    currentProxyIndex++;
-                    if (currentProxyIndex < PROXIES.length) {
-                        resultadoDiv.textContent = `⏳ A mudar de proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
-                        return consultarGarantia();
-                    }
-                }
-                throw new Error(`Erro na pesquisa: ${searchResponse.status}`);
-            }
-
-            const searchData = await searchResponse.json();
-            const productData = searchData?.data?.verifyResponse?.data;
-
-            if (!productData) {
-                // Tenta o próximo proxy se não encontrar o produto
-                currentProxyIndex++;
-                if (currentProxyIndex < PROXIES.length) {
-                    resultadoDiv.textContent = `⏳ A tentar outro proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
-                    return consultarGarantia();
-                }
-                throw new Error('Produto não encontrado. Verifica o número de série.');
-            }
-
-            // Extrair dados do produto
-            const sku = productData.altProductNumber || productData.productNumber || 'N/A';
-            const productName = productData.productName || 'N/A';
-
-            console.log(`✅ Produto encontrado: ${productName}`);
-
-            // --- Passo 2: Obter detalhes da garantia ---
-            const warrantyPayload = {
-                cc: "pt",
-                lc: "pt",
-                utcOffset: "P0100",
-                devices: [{
-                    countryOfPurchase: "pt",
-                    serialNumber: serial,
-                    productNumber: sku,
-                    displayProductNumber: productData.productNumber || sku
-                }],
-                skipSyncCall: false
-            };
-
-            const warrantyUrl = 'https://support.hp.com/wcc-services/profile/devices/warranty/specs?authState=anonymous&template=WarrantyLanding';
-            const warrantyFullUrl = proxy + encodeURIComponent(warrantyUrl);
-
-            console.log(`📡 A consultar garantia: ${warrantyFullUrl}`);
-            const warrantyResponse = await fetch(warrantyFullUrl, {
+            // Usar a API da Vercel
+            const response = await fetch('/api/warranty', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(warrantyPayload)
+                body: JSON.stringify({ serialNumber: serial })
             });
 
-            if (!warrantyResponse.ok) {
-                // Se falhar, tenta o próximo proxy
-                if (warrantyResponse.status === 429 || warrantyResponse.status === 403) {
-                    currentProxyIndex++;
-                    if (currentProxyIndex < PROXIES.length) {
-                        resultadoDiv.textContent = `⏳ A mudar de proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
-                        return consultarGarantia();
+            // Verificar se a resposta é JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Resposta não é JSON:', text.substring(0, 200));
+                
+                // Se a resposta começa com HTML, é a página inicial
+                if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error('A API não está configurada. Verifica o ficheiro api/warranty.js');
+                }
+                throw new Error(`Erro: ${text.substring(0, 100)}...`);
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `Erro ${response.status}`);
+            }
+
+            if (data.success) {
+                const info = data.data;
+                
+                // Formatar datas
+                const startDate = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT') : 'N/A';
+                const endDate = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT') : 'N/A';
+                
+                // Calcular dias restantes
+                let remainingDays = 'N/A';
+                let remainingMonths = 'N/A';
+                if (info.warrantyEndDate) {
+                    const end = new Date(info.warrantyEndDate);
+                    const now = new Date();
+                    const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 0) {
+                        remainingDays = `${diffDays} dias`;
+                        remainingMonths = `${Math.ceil(diffDays / 30)} meses`;
+                    } else {
+                        remainingDays = 'Expirada';
+                        remainingMonths = 'Expirada';
                     }
                 }
-                throw new Error(`Erro na consulta de garantia: ${warrantyResponse.status}`);
-            }
 
-            const warrantyData = await warrantyResponse.json();
+                let statusBadge = '<span class="status-badge status-ativo">Ativo</span>';
+                if (info.statusCode === 3) statusBadge = '<span class="status-badge status-pendente">Pendente</span>';
+                else if (info.statusCode === 4 || info.statusCode === 5) statusBadge = '<span class="status-badge status-expirado">Expirado</span>';
 
-            // --- Passo 3: Extrair e formatar os dados ---
-            const deviceInfo = warrantyData?.data?.devices?.[0];
-            const warrantyInfo = deviceInfo?.warranty?.data;
-            const productSpecs = deviceInfo?.productSpecs?.data;
-
-            if (!warrantyInfo) {
-                throw new Error('Garantia não encontrada para este produto.');
-            }
-
-            // Reset proxy index após sucesso
-            currentProxyIndex = 0;
-
-            // Formatar datas
-            const startDate = warrantyInfo.warrantyStartDate ? new Date(warrantyInfo.warrantyStartDate).toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            }) : 'N/A';
-            
-            const endDate = warrantyInfo.warrantyEndDate ? new Date(warrantyInfo.warrantyEndDate).toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            }) : 'N/A';
-            
-            // Calcular dias restantes
-            let remainingDays = 'N/A';
-            let remainingMonths = 'N/A';
-            if (warrantyInfo.warrantyEndDate) {
-                const end = new Date(warrantyInfo.warrantyEndDate);
-                const now = new Date();
-                const diffTime = end - now;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays > 0) {
-                    remainingDays = `${diffDays} dias`;
-                    const diffMonths = Math.ceil(diffDays / 30);
-                    remainingMonths = `${diffMonths} meses`;
-                } else {
-                    remainingDays = 'Expirada';
-                    remainingMonths = 'Expirada';
-                }
-            }
-
-            // Determinar status
-            let statusBadge = '<span class="status-badge status-ativo">Ativo</span>';
-            if (warrantyInfo.statusCode === 3) statusBadge = '<span class="status-badge status-pendente">Pendente</span>';
-            else if (warrantyInfo.statusCode === 4 || warrantyInfo.statusCode === 5) statusBadge = '<span class="status-badge status-expirado">Expirado</span>';
-
-            const resultHtml = `
+                resultadoDiv.innerHTML = `
 ✅ <strong>CONSULTA BEM-SUCEDIDA!</strong>
 
-📦 <strong>Produto:</strong> ${productSpecs?.productName || productName}
-🔹 <strong>Número de Série:</strong> ${warrantyInfo.serialNumber || serial}
-🔹 <strong>Número do Produto:</strong> ${warrantyInfo.productNumber || sku}
-📊 <strong>Estado:</strong> ${statusBadge} ${warrantyInfo.status || 'N/A'}
-${warrantyInfo.statusDetail ? `📝 <strong>Detalhe:</strong> ${warrantyInfo.statusDetail}` : ''}
+📦 <strong>Produto:</strong> ${info.productName || 'N/A'}
+🔹 <strong>Número de Série:</strong> ${info.serialNumber}
+🔹 <strong>Número do Produto:</strong> ${info.productNumber || 'N/A'}
+📊 <strong>Estado:</strong> ${statusBadge} ${info.status || 'N/A'}
+${info.statusDetail ? `📝 <strong>Detalhe:</strong> ${info.statusDetail}` : ''}
 📅 <strong>Data de Início:</strong> ${startDate}
 📅 <strong>Data de Fim:</strong> ${endDate}
 ⏳ <strong>Dias Restantes:</strong> ${remainingDays}
 📆 <strong>Meses Restantes:</strong> ${remainingMonths}
-${warrantyInfo.warrantyTypeDescription ? `🏷️ <strong>Tipo de Garantia:</strong> ${warrantyInfo.warrantyTypeDescription}` : ''}
-${warrantyInfo.caption ? `\n📌 <strong>Resumo:</strong> ${warrantyInfo.caption}` : ''}
-            `;
-
-            resultadoDiv.innerHTML = resultHtml;
-            resultadoDiv.className = 'sucesso';
-
-        } catch (error) {
-            console.error('❌ Erro detalhado:', error);
-            
-            let errorMessage = error.message;
-            if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-                errorMessage = 'Não foi possível contactar o servidor. Verifica a tua ligação à internet.';
-            } else if (errorMessage.includes('429')) {
-                errorMessage = 'Limite de pedidos excedido. A aguardar alguns segundos... Tenta novamente.';
-            } else if (errorMessage.includes('403')) {
-                errorMessage = 'Proxy bloqueado. A tentar outro proxy...';
+${info.warrantyType ? `🏷️ <strong>Tipo de Garantia:</strong> ${info.warrantyType}` : ''}
+${info.caption ? `\n📌 <strong>Resumo:</strong> ${info.caption}` : ''}
+                `;
+                resultadoDiv.className = 'sucesso';
+            } else {
+                throw new Error(data.error || 'Produto não encontrado');
             }
 
+        } catch (error) {
+            console.error('❌ Erro:', error);
             resultadoDiv.innerHTML = `
 ❌ <strong>Falha na consulta</strong>
 
-${errorMessage}
+${error.message}
 
 <em style="color: #666; font-size: 13px;">Verifica se o número de série está correto e tenta novamente.</em>
 
 <details style="margin-top: 10px; font-size: 12px; color: #999;">
     <summary>🔧 Detalhes técnicos</summary>
-    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 200px; font-size: 11px;">${error.stack || 'Sem stack trace'}</pre>
+    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 200px;">${error.stack || 'Sem stack trace'}</pre>
 </details>
             `;
             resultadoDiv.className = 'erro';
