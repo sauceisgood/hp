@@ -115,6 +115,26 @@
             padding-top: 10px;
             border-top: 1px solid #dee2e6;
         }
+        .test-list {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .test-list span {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .test-list span:hover {
+            background: #0096d6;
+            color: white;
+        }
         @media (max-width: 600px) {
             .container { padding: 20px; }
             .input-row { flex-direction: column; }
@@ -135,6 +155,13 @@
         </div>
     </div>
 
+    <div class="test-list">
+        💡 Testes rápidos:
+        <span onclick="document.getElementById('serial').value='39PKA1'; consultarGarantia();">39PKA1</span>
+        <span onclick="document.getElementById('serial').value='5CD1234XYZ'; consultarGarantia();">5CD1234XYZ</span>
+        <span onclick="document.getElementById('serial').value='CND1234ABC'; consultarGarantia();">CND1234ABC</span>
+    </div>
+
     <div id="resultado">Aguardando consulta...</div>
     <div class="footer">🔒 As chamadas são feitas através de um proxy seguro</div>
 </div>
@@ -144,6 +171,16 @@
     document.getElementById('serial').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultarGarantia();
     });
+
+    // Determinar a URL base da API
+    function getApiUrl() {
+        // Em desenvolvimento local, usa o proxy CORS
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return '/api/warranty';
+        }
+        // Em produção, usa o caminho relativo
+        return '/api/warranty';
+    }
 
     async function consultarGarantia() {
         const serial = document.getElementById('serial').value.trim().toUpperCase();
@@ -161,8 +198,10 @@
         resultadoDiv.className = 'loading';
 
         try {
-            // Usar o caminho relativo para a API
-            const response = await fetch('/api/warranty', {
+            const apiUrl = getApiUrl();
+            console.log(`📡 A chamar API: ${apiUrl}`);
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,7 +213,13 @@
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                throw new Error(`A API retornou HTML em vez de JSON. Verifica a configuração do servidor.`);
+                console.error('Resposta não é JSON:', text.substring(0, 200));
+                
+                // Se a resposta começa com HTML, provavelmente é a página inicial
+                if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error('A API não está configurada corretamente. Verifica o deploy na Vercel.');
+                }
+                throw new Error(`A API retornou: ${text.substring(0, 100)}...`);
             }
 
             const data = await response.json();
@@ -244,17 +289,28 @@ ${info.caption ? `\n📌 <strong>Resumo:</strong> ${info.caption}` : ''}
             }
 
         } catch (error) {
-            console.error('Erro detalhado:', error);
+            console.error('❌ Erro detalhado:', error);
+            
+            let errorMessage = error.message;
+            // Mensagens de erro mais amigáveis
+            if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+                errorMessage = 'Não foi possível contactar o servidor. Verifica a tua ligação à internet.';
+            } else if (errorMessage.includes('404')) {
+                errorMessage = 'A API não foi encontrada. Verifica a configuração do servidor.';
+            } else if (errorMessage.includes('500')) {
+                errorMessage = 'Erro interno no servidor. Tenta novamente mais tarde.';
+            }
+
             resultadoDiv.innerHTML = `
 ❌ <strong>Falha na consulta</strong>
 
-${error.message}
+${errorMessage}
 
 <em style="color: #666; font-size: 13px;">Verifica se o número de série está correto e tenta novamente.</em>
 
 <details style="margin-top: 10px; font-size: 12px; color: #999;">
-    <summary>Detalhes técnicos</summary>
-    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto;">${error.stack || 'Sem stack trace'}</pre>
+    <summary>🔧 Detalhes técnicos</summary>
+    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 200px;">${error.stack || 'Sem stack trace'}</pre>
 </details>
             `;
             resultadoDiv.className = 'erro';
@@ -262,6 +318,18 @@ ${error.message}
             botao.disabled = false;
         }
     }
+
+    // Verificar se a API está a funcionar ao carregar a página
+    window.addEventListener('load', async function() {
+        try {
+            const response = await fetch('/api/warranty', {
+                method: 'OPTIONS'
+            });
+            console.log('✅ API disponível');
+        } catch (error) {
+            console.warn('⚠️ API não disponível:', error.message);
+        }
+    });
 </script>
 </body>
 </html>
