@@ -9,7 +9,7 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             padding: 20px; 
-            background: #f5f5f5;
+            background: #f0f2f5;
             margin: 0;
             min-height: 100vh;
             display: flex;
@@ -17,20 +17,26 @@
             align-items: center;
         }
         .container { 
-            max-width: 700px; 
+            max-width: 750px; 
             width: 100%;
             margin: auto; 
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         h1 { 
             color: #0096d6; 
             margin-top: 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 16px;
         }
         .input-group { 
             margin-bottom: 20px; 
@@ -40,147 +46,175 @@
             margin-bottom: 8px; 
             font-weight: 600;
             color: #333;
+            font-size: 15px;
         }
         .input-row {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
         }
         input[type="text"] { 
             flex: 1;
             min-width: 200px;
-            padding: 12px 15px; 
-            border: 2px solid #ddd; 
-            border-radius: 8px; 
+            padding: 14px 18px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 10px; 
             font-size: 16px;
-            transition: border-color 0.2s;
+            transition: border-color 0.3s;
+            background: #fafafa;
         }
         input[type="text"]:focus {
             border-color: #0096d6;
             outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0,150,214,0.1);
         }
         button { 
-            padding: 12px 30px; 
-            background-color: #0096d6; 
+            padding: 14px 35px; 
+            background: linear-gradient(135deg, #0096d6, #0077b3);
             color: white; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 10px; 
             font-size: 16px;
             font-weight: 600;
             cursor: pointer; 
-            transition: background-color 0.2s;
+            transition: all 0.3s;
             white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,150,214,0.3);
         }
         button:hover:not(:disabled) {
-            background-color: #0077b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,150,214,0.4);
         }
         button:disabled { 
             opacity: 0.6; 
             cursor: not-allowed; 
+            transform: none;
         }
         #resultado { 
             margin-top: 25px; 
-            padding: 20px; 
-            border-radius: 8px; 
-            background-color: #f8f9fa; 
+            padding: 25px; 
+            border-radius: 12px; 
+            background: #f8f9fa; 
             border: 2px solid #e9ecef;
             white-space: pre-wrap; 
             word-wrap: break-word; 
             font-family: 'Courier New', monospace;
             font-size: 14px;
             line-height: 1.8;
-            min-height: 100px;
+            min-height: 120px;
             transition: all 0.3s;
         }
         .sucesso { 
             border-color: #28a745; 
-            background-color: #d4edda; 
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
         }
         .erro { 
             border-color: #dc3545; 
-            background-color: #f8d7da; 
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
         }
         .loading {
             border-color: #ffc107;
-            background-color: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd, #ffe69c);
         }
         .footer {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
             font-size: 12px;
-            color: #888;
-        }
-        .detalhe {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #dee2e6;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
         }
         .test-list {
-            margin-top: 15px;
-            padding: 10px;
+            margin: 15px 0 10px;
+            padding: 12px 15px;
             background: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 13px;
+            border: 1px solid #eee;
+        }
+        .test-list .label {
+            font-weight: 600;
+            color: #555;
+            margin-right: 10px;
         }
         .test-list span {
             display: inline-block;
-            background: #e9ecef;
-            padding: 2px 10px;
-            border-radius: 12px;
-            margin: 3px;
+            background: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin: 3px 4px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+            font-family: monospace;
+            font-size: 13px;
         }
         .test-list span:hover {
             background: #0096d6;
             color: white;
+            border-color: #0096d6;
         }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-ativo { background: #28a745; color: white; }
+        .status-expirado { background: #dc3545; color: white; }
+        .status-pendente { background: #ffc107; color: #333; }
         @media (max-width: 600px) {
             .container { padding: 20px; }
             .input-row { flex-direction: column; }
-            button { width: 100%; }
+            button { width: 100%; justify-content: center; }
+            h1 { font-size: 22px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>🔍 Validador de Garantia HP</h1>
-    <p style="color: #666; margin-bottom: 25px;">Insere o número de série para consultar o estado da garantia.</p>
+    <p class="subtitle">Insere o número de série para consultar o estado da garantia do produto.</p>
     
     <div class="input-group">
-        <label for="serial">Número de Série:</label>
+        <label for="serial">🔹 Número de Série:</label>
         <div class="input-row">
             <input type="text" id="serial" placeholder="Ex: 39PKA1" value="39PKA1">
-            <button id="btnConsultar">Consultar</button>
+            <button id="btnConsultar">🔍 Consultar</button>
         </div>
     </div>
 
     <div class="test-list">
-        💡 Testes rápidos:
+        <span class="label">⚡ Testes rápidos:</span>
         <span onclick="document.getElementById('serial').value='39PKA1'; consultarGarantia();">39PKA1</span>
-        <span onclick="document.getElementById('serial').value='5CD1234XYZ'; consultarGarantia();">5CD1234XYZ</span>
         <span onclick="document.getElementById('serial').value='CND1234ABC'; consultarGarantia();">CND1234ABC</span>
+        <span onclick="document.getElementById('serial').value='5CD1234XYZ'; consultarGarantia();">5CD1234XYZ</span>
+        <span onclick="document.getElementById('serial').value='SER123456'; consultarGarantia();">SER123456</span>
     </div>
 
-    <div id="resultado">Aguardando consulta...</div>
-    <div class="footer">🔒 As chamadas são feitas através de um proxy seguro</div>
+    <div id="resultado">💡 Aguardando consulta...</div>
+    <div class="footer">
+        🔒 Utiliza um proxy CORS para comunicação segura com a API da HP<br>
+        <span style="font-size: 11px; color: #bbb;">v1.0 - Consulta garantia de produtos HP</span>
+    </div>
 </div>
 
 <script>
+    // Lista de proxies CORS disponíveis (tenta cada um até funcionar)
+    const PROXIES = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://cors-anywhere.herokuapp.com/'
+    ];
+
+    let currentProxyIndex = 0;
+
     document.getElementById('btnConsultar').addEventListener('click', consultarGarantia);
     document.getElementById('serial').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultarGarantia();
     });
-
-    // Determinar a URL base da API
-    function getApiUrl() {
-        // Em desenvolvimento local, usa o proxy CORS
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            return '/api/warranty';
-        }
-        // Em produção, usa o caminho relativo
-        return '/api/warranty';
-    }
 
     async function consultarGarantia() {
         const serial = document.getElementById('serial').value.trim().toUpperCase();
@@ -194,111 +228,173 @@
         }
 
         botao.disabled = true;
-        resultadoDiv.textContent = '⏳ A consultar a garantia...';
+        resultadoDiv.textContent = '⏳ A consultar a garantia... (tentativa com proxy ' + (currentProxyIndex + 1) + ' de ' + PROXIES.length + ')';
         resultadoDiv.className = 'loading';
 
-        try {
-            const apiUrl = getApiUrl();
-            console.log(`📡 A chamar API: ${apiUrl}`);
+        // Reset proxy index se já tentámos todos
+        if (currentProxyIndex >= PROXIES.length) {
+            currentProxyIndex = 0;
+        }
 
-            const response = await fetch(apiUrl, {
+        try {
+            const proxy = PROXIES[currentProxyIndex];
+            
+            // --- Passo 1: Pesquisar o produto ---
+            const searchUrl = `https://support.hp.com/wcc-services/searchresult/pt-pt?q=${encodeURIComponent(serial)}&context=pdp`;
+            const searchFullUrl = proxy + encodeURIComponent(searchUrl);
+            
+            console.log(`📡 Pesquisando: ${searchFullUrl}`);
+            const searchResponse = await fetch(searchFullUrl);
+            
+            if (!searchResponse.ok) {
+                // Se falhar, tenta o próximo proxy
+                if (searchResponse.status === 429 || searchResponse.status === 403) {
+                    currentProxyIndex++;
+                    if (currentProxyIndex < PROXIES.length) {
+                        resultadoDiv.textContent = `⏳ A mudar de proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
+                        return consultarGarantia();
+                    }
+                }
+                throw new Error(`Erro na pesquisa: ${searchResponse.status}`);
+            }
+
+            const searchData = await searchResponse.json();
+            const productData = searchData?.data?.verifyResponse?.data;
+
+            if (!productData) {
+                // Tenta o próximo proxy se não encontrar o produto
+                currentProxyIndex++;
+                if (currentProxyIndex < PROXIES.length) {
+                    resultadoDiv.textContent = `⏳ A tentar outro proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
+                    return consultarGarantia();
+                }
+                throw new Error('Produto não encontrado. Verifica o número de série.');
+            }
+
+            // Extrair dados do produto
+            const sku = productData.altProductNumber || productData.productNumber || 'N/A';
+            const productName = productData.productName || 'N/A';
+
+            console.log(`✅ Produto encontrado: ${productName}`);
+
+            // --- Passo 2: Obter detalhes da garantia ---
+            const warrantyPayload = {
+                cc: "pt",
+                lc: "pt",
+                utcOffset: "P0100",
+                devices: [{
+                    countryOfPurchase: "pt",
+                    serialNumber: serial,
+                    productNumber: sku,
+                    displayProductNumber: productData.productNumber || sku
+                }],
+                skipSyncCall: false
+            };
+
+            const warrantyUrl = 'https://support.hp.com/wcc-services/profile/devices/warranty/specs?authState=anonymous&template=WarrantyLanding';
+            const warrantyFullUrl = proxy + encodeURIComponent(warrantyUrl);
+
+            console.log(`📡 A consultar garantia: ${warrantyFullUrl}`);
+            const warrantyResponse = await fetch(warrantyFullUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ serialNumber: serial })
+                body: JSON.stringify(warrantyPayload)
             });
 
-            // Verificar se a resposta é JSON válido
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.error('Resposta não é JSON:', text.substring(0, 200));
-                
-                // Se a resposta começa com HTML, provavelmente é a página inicial
-                if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-                    throw new Error('A API não está configurada corretamente. Verifica o deploy na Vercel.');
-                }
-                throw new Error(`A API retornou: ${text.substring(0, 100)}...`);
-            }
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || `Erro ${response.status}`);
-            }
-
-            if (data.success) {
-                const info = data.data;
-                
-                // Formatar datas
-                const startDate = info.warrantyStartDate ? new Date(info.warrantyStartDate).toLocaleDateString('pt-PT', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }) : 'N/A';
-                
-                const endDate = info.warrantyEndDate ? new Date(info.warrantyEndDate).toLocaleDateString('pt-PT', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }) : 'N/A';
-                
-                // Calcular dias restantes
-                let remainingDays = 'N/A';
-                let remainingMonths = 'N/A';
-                if (info.warrantyEndDate) {
-                    const end = new Date(info.warrantyEndDate);
-                    const now = new Date();
-                    const diffTime = end - now;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays > 0) {
-                        remainingDays = `${diffDays} dias`;
-                        const diffMonths = Math.ceil(diffDays / 30);
-                        remainingMonths = `${diffMonths} meses`;
-                    } else {
-                        remainingDays = 'Expirada';
-                        remainingMonths = 'Expirada';
+            if (!warrantyResponse.ok) {
+                // Se falhar, tenta o próximo proxy
+                if (warrantyResponse.status === 429 || warrantyResponse.status === 403) {
+                    currentProxyIndex++;
+                    if (currentProxyIndex < PROXIES.length) {
+                        resultadoDiv.textContent = `⏳ A mudar de proxy... (${currentProxyIndex + 1}/${PROXIES.length})`;
+                        return consultarGarantia();
                     }
                 }
+                throw new Error(`Erro na consulta de garantia: ${warrantyResponse.status}`);
+            }
 
-                // Determinar status colorido
-                let statusEmoji = '🟢';
-                if (info.statusCode === 3) statusEmoji = '🟡';
-                else if (info.statusCode === 4 || info.statusCode === 5) statusEmoji = '🔴';
+            const warrantyData = await warrantyResponse.json();
 
-                resultadoDiv.innerHTML = `
+            // --- Passo 3: Extrair e formatar os dados ---
+            const deviceInfo = warrantyData?.data?.devices?.[0];
+            const warrantyInfo = deviceInfo?.warranty?.data;
+            const productSpecs = deviceInfo?.productSpecs?.data;
+
+            if (!warrantyInfo) {
+                throw new Error('Garantia não encontrada para este produto.');
+            }
+
+            // Reset proxy index após sucesso
+            currentProxyIndex = 0;
+
+            // Formatar datas
+            const startDate = warrantyInfo.warrantyStartDate ? new Date(warrantyInfo.warrantyStartDate).toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }) : 'N/A';
+            
+            const endDate = warrantyInfo.warrantyEndDate ? new Date(warrantyInfo.warrantyEndDate).toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }) : 'N/A';
+            
+            // Calcular dias restantes
+            let remainingDays = 'N/A';
+            let remainingMonths = 'N/A';
+            if (warrantyInfo.warrantyEndDate) {
+                const end = new Date(warrantyInfo.warrantyEndDate);
+                const now = new Date();
+                const diffTime = end - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 0) {
+                    remainingDays = `${diffDays} dias`;
+                    const diffMonths = Math.ceil(diffDays / 30);
+                    remainingMonths = `${diffMonths} meses`;
+                } else {
+                    remainingDays = 'Expirada';
+                    remainingMonths = 'Expirada';
+                }
+            }
+
+            // Determinar status
+            let statusBadge = '<span class="status-badge status-ativo">Ativo</span>';
+            if (warrantyInfo.statusCode === 3) statusBadge = '<span class="status-badge status-pendente">Pendente</span>';
+            else if (warrantyInfo.statusCode === 4 || warrantyInfo.statusCode === 5) statusBadge = '<span class="status-badge status-expirado">Expirado</span>';
+
+            const resultHtml = `
 ✅ <strong>CONSULTA BEM-SUCEDIDA!</strong>
 
-📦 <strong>Produto:</strong> ${info.productName || 'N/A'}
-🔹 <strong>Número de Série:</strong> ${info.serialNumber}
-🔹 <strong>Número do Produto:</strong> ${info.productNumber || 'N/A'}
-📊 <strong>Estado:</strong> ${statusEmoji} ${info.status || 'N/A'}
-${info.statusDetail ? `📝 <strong>Detalhe:</strong> ${info.statusDetail}` : ''}
+📦 <strong>Produto:</strong> ${productSpecs?.productName || productName}
+🔹 <strong>Número de Série:</strong> ${warrantyInfo.serialNumber || serial}
+🔹 <strong>Número do Produto:</strong> ${warrantyInfo.productNumber || sku}
+📊 <strong>Estado:</strong> ${statusBadge} ${warrantyInfo.status || 'N/A'}
+${warrantyInfo.statusDetail ? `📝 <strong>Detalhe:</strong> ${warrantyInfo.statusDetail}` : ''}
 📅 <strong>Data de Início:</strong> ${startDate}
 📅 <strong>Data de Fim:</strong> ${endDate}
 ⏳ <strong>Dias Restantes:</strong> ${remainingDays}
 📆 <strong>Meses Restantes:</strong> ${remainingMonths}
-${info.warrantyType ? `🏷️ <strong>Tipo de Garantia:</strong> ${info.warrantyType}` : ''}
-${info.caption ? `\n📌 <strong>Resumo:</strong> ${info.caption}` : ''}
-                `;
-                resultadoDiv.className = 'sucesso';
-            } else {
-                throw new Error(data.error || 'Produto não encontrado');
-            }
+${warrantyInfo.warrantyTypeDescription ? `🏷️ <strong>Tipo de Garantia:</strong> ${warrantyInfo.warrantyTypeDescription}` : ''}
+${warrantyInfo.caption ? `\n📌 <strong>Resumo:</strong> ${warrantyInfo.caption}` : ''}
+            `;
+
+            resultadoDiv.innerHTML = resultHtml;
+            resultadoDiv.className = 'sucesso';
 
         } catch (error) {
             console.error('❌ Erro detalhado:', error);
             
             let errorMessage = error.message;
-            // Mensagens de erro mais amigáveis
             if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
                 errorMessage = 'Não foi possível contactar o servidor. Verifica a tua ligação à internet.';
-            } else if (errorMessage.includes('404')) {
-                errorMessage = 'A API não foi encontrada. Verifica a configuração do servidor.';
-            } else if (errorMessage.includes('500')) {
-                errorMessage = 'Erro interno no servidor. Tenta novamente mais tarde.';
+            } else if (errorMessage.includes('429')) {
+                errorMessage = 'Limite de pedidos excedido. A aguardar alguns segundos... Tenta novamente.';
+            } else if (errorMessage.includes('403')) {
+                errorMessage = 'Proxy bloqueado. A tentar outro proxy...';
             }
 
             resultadoDiv.innerHTML = `
@@ -310,7 +406,7 @@ ${errorMessage}
 
 <details style="margin-top: 10px; font-size: 12px; color: #999;">
     <summary>🔧 Detalhes técnicos</summary>
-    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 200px;">${error.stack || 'Sem stack trace'}</pre>
+    <pre style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow: auto; max-height: 200px; font-size: 11px;">${error.stack || 'Sem stack trace'}</pre>
 </details>
             `;
             resultadoDiv.className = 'erro';
@@ -318,18 +414,6 @@ ${errorMessage}
             botao.disabled = false;
         }
     }
-
-    // Verificar se a API está a funcionar ao carregar a página
-    window.addEventListener('load', async function() {
-        try {
-            const response = await fetch('/api/warranty', {
-                method: 'OPTIONS'
-            });
-            console.log('✅ API disponível');
-        } catch (error) {
-            console.warn('⚠️ API não disponível:', error.message);
-        }
-    });
 </script>
 </body>
 </html>
