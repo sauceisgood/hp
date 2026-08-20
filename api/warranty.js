@@ -1,6 +1,5 @@
-// api/warranty.js
 export default async function handler(req, res) {
-    // Permitir CORS para desenvolvimento
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -20,14 +19,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        console.log(`🔍 A pesquisar: ${serialNumber}`);
-
-        // Passo 1: Pesquisar o produto
+        // Passo 1: Pesquisar produto
         const searchUrl = `https://support.hp.com/wcc-services/searchresult/pt-pt?q=${encodeURIComponent(serialNumber)}&context=pdp`;
         const searchRes = await fetch(searchUrl);
         
         if (!searchRes.ok) {
-            throw new Error(`Erro na pesquisa: ${searchRes.status}`);
+            return res.status(searchRes.status).json({ error: `Erro na pesquisa: ${searchRes.status}` });
         }
 
         const searchData = await searchRes.json();
@@ -61,7 +58,7 @@ export default async function handler(req, res) {
         });
 
         if (!warrantyRes.ok) {
-            throw new Error(`Erro na garantia: ${warrantyRes.status}`);
+            return res.status(warrantyRes.status).json({ error: `Erro na garantia: ${warrantyRes.status}` });
         }
 
         const warrantyData = await warrantyRes.json();
@@ -90,7 +87,6 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('❌ Erro:', error);
         return res.status(500).json({ 
             error: 'Erro interno',
             details: error.message 
