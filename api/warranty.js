@@ -1,4 +1,5 @@
-export default async function handler(req, res) {
+// api/warranty.js
+module.exports = async function handler(req, res) {
     // Permitir apenas POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método não permitido. Use POST.' });
@@ -97,4 +98,4 @@ export default async function handler(req, res) {
             details: error.message 
         });
     }
-}
+};
