@@ -1,17 +1,33 @@
-// api/warranty.js
-module.exports = async function handler(req, res) {
-    // Permitir apenas POST
+// api/warranty.js - Versão ESM para Vercel
+export default async function handler(req, res) {
+    // Configurar CORS para desenvolvimento local
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Método não permitido. Use POST.' });
+        return res.status(405).json({ 
+            error: 'Método não permitido. Use POST.' 
+        });
     }
 
     const { serialNumber } = req.body;
 
     if (!serialNumber) {
-        return res.status(400).json({ error: 'Número de série é obrigatório.' });
+        return res.status(400).json({ 
+            error: 'Número de série é obrigatório.' 
+        });
     }
 
     try {
+        console.log(`🔍 A pesquisar produto: ${serialNumber}`);
+
         // --- Passo 1: Pesquisar o produto ---
         const searchUrl = `https://support.hp.com/wcc-services/searchresult/pt-pt?q=${encodeURIComponent(serialNumber)}&context=pdp`;
         const searchResponse = await fetch(searchUrl);
@@ -24,13 +40,17 @@ module.exports = async function handler(req, res) {
         const productData = searchData?.data?.verifyResponse?.data;
 
         if (!productData) {
-            return res.status(404).json({ error: 'Produto não encontrado.' });
+            return res.status(404).json({ 
+                error: 'Produto não encontrado. Verifica o número de série.' 
+            });
         }
 
         // Extrair dados do produto
         const sku = productData.altProductNumber || productData.productNumber || 'N/A';
         const seriesOid = productData.productSeriesOid;
         const modelOid = productData.productNameOid;
+
+        console.log(`✅ Produto encontrado: ${productData.productName || 'N/A'}`);
 
         // --- Passo 2: Obter detalhes da garantia ---
         const warrantyPayload = {
@@ -67,8 +87,12 @@ module.exports = async function handler(req, res) {
         const productSpecs = deviceInfo?.productSpecs?.data;
 
         if (!warrantyInfo) {
-            return res.status(404).json({ error: 'Garantia não encontrada para este produto.' });
+            return res.status(404).json({ 
+                error: 'Garantia não encontrada para este produto.' 
+            });
         }
+
+        console.log(`✅ Garantia encontrada: ${warrantyInfo.status || 'N/A'}`);
 
         // Dados formatados para retornar
         const result = {
@@ -92,10 +116,10 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(result);
 
     } catch (error) {
-        console.error('Erro na API:', error);
+        console.error('❌ Erro na API:', error);
         return res.status(500).json({ 
             error: 'Erro interno ao processar a consulta.',
             details: error.message 
         });
     }
-};
+}
